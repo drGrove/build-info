@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"runtime"
-	"strings"
 	"text/template"
 
 	"github.com/shurcooL/githubv4"
@@ -39,7 +37,6 @@ var (
 	repositoryOwner   string
 	repositoryName    string
 	pullRequestNumber int64
-	label             string
 )
 
 // Build information. Populated at build-time.
@@ -58,8 +55,7 @@ var versionInfoTmpl = `
   build user:       {{.buildUser}}
   build date:       {{.buildDate}}
   go version:       {{.goVersion}}
-  platform:         {{.platform}}
-`
+  platform:         {{.platform}}`
 
 func hasLabel(cCtx *cli.Context) error {
 	githubToken := os.Getenv("GITHUB_TOKEN")
@@ -89,7 +85,6 @@ func hasLabel(cCtx *cli.Context) error {
 			return err
 		}
 		for _, label := range labelsQuery.Repository.PullRequest.Labels.Edges {
-			fmt.Printf("%v", label.Node)
 			labels = append(labels, label.Node.Name)
 		}
 		if !labelsQuery.Repository.PullRequest.Labels.PageInfo.HasNextPage {
@@ -97,8 +92,15 @@ func hasLabel(cCtx *cli.Context) error {
 		}
 		variables["labelsCursor"] = githubv4.NewString(labelsQuery.Repository.PullRequest.Labels.PageInfo.EndCursor)
 	}
-	if !slices.Contains(labels, label) {
+	search := cCtx.Args().Get(0)
+	if !slices.Contains(labels, search) {
+		if !cCtx.Bool("quiet") {
+			fmt.Fprintf(cCtx.App.Writer, "%v not found\n", search)
+		}
 		return cli.Exit("", 1)
+	}
+	if !cCtx.Bool("quiet") {
+		fmt.Fprintf(cCtx.App.Writer, "%v found\n", search)
 	}
 	return cli.Exit("", 0)
 }
@@ -111,7 +113,7 @@ var authors = []*cli.Author{
 }
 var copyright = "(c) 2022 Danny Grove"
 
-func main() {
+func init() {
 	cli.VersionPrinter = func(cCtx *cli.Context) {
 		m := map[string]string{
 			"program":   "build-info",
@@ -129,9 +131,43 @@ func main() {
 		if err := t.ExecuteTemplate(&buf, "version", m); err != nil {
 			panic(err)
 		}
-		fmt.Printf(strings.TrimSpace(buf.String()))
+		fmt.Fprintln(cCtx.App.Writer, buf.String())
 	}
+}
 
+func baseAction(cCtx *cli.Context) error {
+	return nil
+}
+
+var hasLabelCommand = &cli.Command{
+	Name:  "has-label",
+	Usage: "check if a PR has a label",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:    "quiet",
+			Aliases: []string{"q"},
+			Usage:   "Output to stdout",
+		},
+	},
+	Action: hasLabel,
+}
+
+var pullRequestSubCommand = &cli.Command{
+	Name:    "pull-request",
+	Aliases: []string{"pr"},
+	Usage:   "Get info on pull-request",
+	Flags: []cli.Flag{
+		&cli.Int64Flag{
+			Name:        "number",
+			Usage:       "Set the pull request number",
+			Destination: &pullRequestNumber,
+			EnvVars:     []string{"GITHUB_PR", "DRONE_PULL_REQUEST"},
+		},
+	},
+	Subcommands: []*cli.Command{hasLabelCommand},
+}
+
+func main() {
 	app := &cli.App{
 		Name:                   "build-info",
 		Usage:                  "Get info from a build",
@@ -140,48 +176,22 @@ func main() {
 		EnableBashCompletion:   true,
 		UseShortOptionHandling: true,
 		Authors:                authors,
+		Copyright:              copyright,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "repo-owner",
 				Usage:       "Set the owner of the repository",
 				Destination: &repositoryOwner,
-				EnvVars:     []string{"GITHUB_REPO_OWNER"},
+				EnvVars:     []string{"GITHUB_REPO_OWNER", "DRONE_REPO_OWNER"},
 			},
 			&cli.StringFlag{
 				Name:        "repo-name",
 				Usage:       "Set the name of the repository to query",
 				Destination: &repositoryName,
-				EnvVars:     []string{"GITHUB_REPO_NAME"},
-			},
-			&cli.Int64Flag{
-				Name:        "pr",
-				Usage:       "Set the pull request number to get the labels from",
-				Destination: &pullRequestNumber,
-				EnvVars:     []string{"GITHUB_PR"},
+				EnvVars:     []string{"GITHUB_REPO_NAME", "DRONE_REPO_NAME"},
 			},
 		},
-		Commands: []*cli.Command{
-			{
-				Name:  "has-label",
-				Usage: "check if a PR has a label",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:        "label",
-						Aliases:     []string{"l"},
-						Value:       "",
-						Usage:       "Check if PR has a label",
-						Destination: &label,
-					},
-				},
-				BashComplete: func(cCtx *cli.Context) {
-					fmt.Fprintf(cCtx.App.Writer, "--label\n")
-				},
-				Action: hasLabel,
-			},
-		},
+		Commands: []*cli.Command{pullRequestSubCommand},
 	}
-
-	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
-	}
+	app.Run(os.Args)
 }
