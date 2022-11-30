@@ -42,20 +42,17 @@ var (
 // Build information. Populated at build-time.
 var (
 	Version   string
-	Revision  string
-	Branch    string
-	BuildUser string
 	BuildDate string
 	GoVersion = runtime.Version()
 )
 
 // versionInfoTmpl contains the template used by Info.
 var versionInfoTmpl = `
-{{.program}}, version {{.version}} (branch: {{.branch}}, revision: {{.revision}})
-  build user:       {{.buildUser}}
+{{.program}}, version {{.version}}
   build date:       {{.buildDate}}
   go version:       {{.goVersion}}
-  platform:         {{.platform}}`
+  platform:         {{.platform}}
+`
 
 func hasLabel(cCtx *cli.Context) error {
 	githubToken := os.Getenv("GITHUB_TOKEN")
@@ -118,9 +115,6 @@ func init() {
 		m := map[string]string{
 			"program":   "build-info",
 			"version":   Version,
-			"revision":  Revision,
-			"branch":    Branch,
-			"buildUser": BuildUser,
 			"buildDate": BuildDate,
 			"goVersion": GoVersion,
 			"platform":  runtime.GOOS + "/" + runtime.GOARCH,
