@@ -24,7 +24,7 @@ armbuildflags := build
 endif
 
 ifeq ($(uname_s), Linux)
-build-date := $(shell date -u '+%Y%m%d-%H:%M:%S' --date=$(SOURCE_DATE_EPOCH))
+build-date := $(shell date -u '+%Y%m%d-%H:%M:%S' --date=@$(SOURCE_DATE_EPOCH))
 else ifeq ($(uname_s), Darwin)
 build-date := $(shell date -j -f '%s' $(SOURCE_DATE_EPOCH) '+%Y%m%d-%H:%M:%S')
 endif
