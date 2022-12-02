@@ -79,7 +79,7 @@ func hasLabel(cCtx *cli.Context) error {
 	for {
 		err := client.Query(context.Background(), &labelsQuery, variables)
 		if err != nil {
-			return err
+			return cli.Exit("Could not query for labels", 126)
 		}
 		for _, label := range labelsQuery.Repository.PullRequest.Labels.Edges {
 			labels = append(labels, label.Node.Name)
@@ -140,6 +140,7 @@ var hasLabelCommand = &cli.Command{
 		&cli.BoolFlag{
 			Name:    "quiet",
 			Aliases: []string{"q"},
+			Value:   false,
 			Usage:   "Output to stdout",
 		},
 	},
