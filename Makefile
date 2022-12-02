@@ -1,7 +1,6 @@
 VERSION ?= $(shell git describe --tags --always)
 amd-builder-digest := d388153691a825844ebb3586dd04d1c60a2215522cc445701424205dffc8a83e
 arm-builder-digest := 533ea8ef7688aacf5626e18d71dd7ae6a4b02f8c226ae0ec461fd43acb815159
-amd-expected-sha := 3a1400c8e03cc5355df101c29d633fe1a344dc66aca02d7db591ad2cdbf704a138cedfef839aa2bdf95ac817544229313aa5a18ac94e2ba2c8707d0cc179c2a4
 uname_m := $(shell uname -m)
 uname_s := $(shell uname -s)
 SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct)
