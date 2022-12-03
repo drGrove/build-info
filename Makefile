@@ -78,3 +78,11 @@ image-x86_64:
 		$(EXTRA_FLAGS) \
 		-t drgrove/build-info:$(VERSION)-amd64 \
 		.
+
+.PHONY: manifest
+manifest:
+	docker manifest create \
+		drgrove/build-info:$(VERSION) \
+		--amend drgrove/build-info:$(VERSION)-amd64 \
+		--amend drgrove/build-info:$(VERSION)-arm64
+	docker manifest push drgrove/build-info:$(VERSION)
