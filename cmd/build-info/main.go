@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+  "strings"
 	"text/template"
 
 	"github.com/shurcooL/githubv4"
@@ -79,7 +80,8 @@ func hasLabel(cCtx *cli.Context) error {
 	for {
 		err := client.Query(context.Background(), &labelsQuery, variables)
 		if err != nil {
-			return cli.Exit("Could not query for labels", 126)
+      errorMessage := fmt.Sprintf("Could not query for labels: %v", err)
+			return cli.Exit(errorMessage, 126)
 		}
 		for _, label := range labelsQuery.Repository.PullRequest.Labels.Edges {
 			labels = append(labels, label.Node.Name)
@@ -90,14 +92,15 @@ func hasLabel(cCtx *cli.Context) error {
 		variables["labelsCursor"] = githubv4.NewString(labelsQuery.Repository.PullRequest.Labels.PageInfo.EndCursor)
 	}
 	search := cCtx.Args().Get(0)
+  labelString := strings.Join(labels,", ")
 	if !slices.Contains(labels, search) {
 		if !cCtx.Bool("quiet") {
-			fmt.Fprintf(cCtx.App.Writer, "%v not found\n", search)
+			fmt.Fprintf(cCtx.App.Writer, "%v not found in %s\n", search, labelString)
 		}
 		return cli.Exit("", 1)
 	}
 	if !cCtx.Bool("quiet") {
-		fmt.Fprintf(cCtx.App.Writer, "%v found\n", search)
+		fmt.Fprintf(cCtx.App.Writer, "%v found in %s\n", search, labelString)
 	}
 	return cli.Exit("", 0)
 }

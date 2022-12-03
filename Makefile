@@ -65,7 +65,7 @@ image-arm64:
 		--build-arg BUILDER_SHA=$(arm-builder-digest) \
 		--build-arg EXPECTED_SHA=$(arm-expected-sha) \
 		$(EXTRA_FLAGS) \
-		-t drgrove/build-info:$(VERSION) \
+		-t drgrove/build-info:$(VERSION)-arm64 \
 		.
 
 .PHONY: image-x86_64
@@ -76,5 +76,5 @@ image-x86_64:
 		--build-arg BUILDER_SHA=$(amd-builder-digest) \
 		--build-arg EXPECTED_SHA=$(amd-expected-sha) \
 		$(EXTRA_FLAGS) \
-		-t drgrove/build-info:$(VERSION) \
+		-t drgrove/build-info:$(VERSION)-amd64 \
 		.
