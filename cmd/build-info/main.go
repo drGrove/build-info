@@ -95,12 +95,12 @@ func hasLabel(cCtx *cli.Context) error {
   labelString := strings.Join(labels,", ")
 	if !slices.Contains(labels, search) {
 		if !cCtx.Bool("quiet") {
-			fmt.Fprintf(cCtx.App.Writer, "%v not found in %s\n", search, labelString)
+      fmt.Fprintf(cCtx.App.Writer, "%v not found in: %s\n", search, labelString)
 		}
 		return cli.Exit("", 1)
 	}
 	if !cCtx.Bool("quiet") {
-		fmt.Fprintf(cCtx.App.Writer, "%v found in %s\n", search, labelString)
+    fmt.Fprintf(cCtx.App.Writer, "%v found in: %s\n", search, labelString)
 	}
 	return cli.Exit("", 0)
 }
